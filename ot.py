@@ -1,5 +1,3 @@
-import logging
-
 from lib.cli import start
 
 if __name__ == "__main__":
