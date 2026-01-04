@@ -73,11 +73,11 @@ class SourceCodeManager(Module):
         dt = datetime.now()
         return f"ot-action-{dt.strftime("%Y-%m-%d-%H-%M")}"
 
-    def generate_commit_message(self, pipeline):
-        msg = " ".join(pipeline.prompts)
-        return f"O't-mated: {msg}"
+    def generate_commit_message(self, action):
+        msg = " ".join(action.prompts)
+        return f"O't-mated {action.action}: {msg}"
     
-    def before_process(self, config, pipeline):
+    def before_action(self, config, action):
         """check git repository status"""
         # check repository status
         rs = get_repo_status(config)
@@ -96,22 +96,22 @@ class SourceCodeManager(Module):
             logger.info(create_and_switch_branch(config, branch_name))
 
         # check target files
-        for target in pipeline.get_targets():
+        for target in action.get_targets():
             if not is_file_managed(config, target):
                 raise ScmError(f"target file {target} is not tracked by git")
             if is_file_changed(config, target):
                 raise ScmError(f"target file {target} is modified. please commit before manipurate")
 
-    def after_process(self, config, pipeline):
+    def after_action(self, config, action):
         """commit changes"""
         # add changed files
         changed = False
-        for target in pipeline.get_targets():
+        for target in action.get_targets():
             if is_file_changed(config, target):
                 add_file(config, target)
                 changed = True
         if not changed:
             logger.info("skip commit - no file changed")
             return
-        commit_msg = self.generate_commit_message(pipeline)
+        commit_msg = self.generate_commit_message(action)
         commit(config, commit_msg)

@@ -1,87 +1,53 @@
+"""Implements Pipeline"""
+
 import json
 
 from .chat_request import ChatRequest
 from .request import chat_completions
-from .extractor import Extractor
+from .state import State
 
 class Pipeline:
     """A class holds operations and targets"""
-    targets: list[str]
-    prompts: list[str]
-    sys_prompts: list[str]
     results: list
-    action: str
     error_count: int
-    newline: str|None
+    output_newline: str|None
+    input_encoding: str
+    output_encoding: str
+    state: State
 
-    def __init__(self):
-        self.targets = []
-        self.prompts = []
-        self.sys_prompts = []
+    def __init__(self, config, state: State):
         self.results = []
-        self.action = "overwrite"
         self.error_count = 0
-        self.state = None
-        self.newline = ""
-        # TODO: add option to controll newline
+        self.state = state
+        self.config = config
+        self.output_newline = config.get("output", {}).get("newline", None)
+        self.output_encoding = config.get("output", {}).get("encoding", "utf8")
+        self.input_encoding = config.get("input", {}).get("encoding", "utf8")
+        self.actions = []
         
-    @classmethod
-    def fromAction(cls, action):
-        p = cls()
-        if "target" in action:
-            p.targets.append(action["target"])
-        if "prompt" in action:
-            p.prompts.append(action["prompt"])
-        if "action" in action:
-            p.action = action["action"]
-        return p
+    def add_action(self, action):
+        self.actions.append(action)
 
     def add_result(self, result):
         self.results.append(result)
 
-    def setStateController(self, state):
-        self.state = state
-        
-    def execute_action(self, target, resp):
-        extractor = Extractor()
-        items = extractor.parse(resp)
-        result = {
-            "target": target,
-            "outputs": items,
-            "response": extractor.get_contents(resp),
-            "reasoning": extractor.get_reasoning_contents(resp),
-            "succeeded": False,
-        }
-        if self.action == "overwrite":
-            if len(items) == 1:
-                with open(target, "wt", encoding="utf8", newline=self.newline) as fp:
-                    fp.write(items[0])
-                result["succeeded"] = True
-            else:
-                if len(items):
-                    print(f"outputs for {target} is not found, skip saving...")
-                else:
-                    print(f"multiple outputs for {target} are found, skip saving...")
-                self.error_count += 1
-            self.add_result(result)
-                
-        else: # print
-            index = 0
-            for item in items:
-                print(f"---- result #{index}: ----\n")
-                print(item)
-                index += 1
-
-    def get_targets(self) -> list[str]:
-        return self.targets
-    
     def start(self):
-        req = ChatRequest()
-        for prompt in self.prompts:
-            req.add_user_message(prompt)
+        for action in self.actions:
+            self.state.transition(State.States.BEFORE_ACTION, action)
+            action.execute(self)
+            self.state.transition(State.States.AFTER_ACTION, action)
 
-        for target in self.targets:
-            with open(target, encoding="utf8") as fp:
-                req.add_user_message(fp.read())
-                resp = chat_completions(req.as_json())
-                self.execute_action(target, resp)
+    def load_text_file(self, filename: str) -> str:
+        with open(filename, "rt", encoding=self.input_encoding) as fp:
+            result = fp.read()
+        return result
+
+    def save_text_file(self, filename: str, content: str):
+        with open(filename, "wt",
+                  encoding=self.output_encoding,
+                  newline=self.output_newline) as fp:
+            fp.write(content)
+        
+    def execute_chat_completions(self, request: str):
+        resp = chat_completions(request)
+        return resp
