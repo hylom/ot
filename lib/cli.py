@@ -23,6 +23,8 @@ def start():
     args = pre_parse_arg()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     config = Config()
     config.load()

@@ -2,6 +2,9 @@
 
 from pathlib import Path
 import re
+import time
+import logging
+logger = logging.getLogger(__name__)
 
 from .chat_request import ChatRequest
 from .extractor import Extractor
@@ -47,7 +50,10 @@ class Action:
     
     def set_action(self, action):
         if "target" in action:
-            self.targets.append(action["target"])
+            if isinstance(action["target"], list):
+                self.targets.extend(action["target"])
+            else:
+                self.targets.append(action["target"])
         if "prompt" in action:
             self.prompts.append(action["prompt"])
         if "action" in action:
@@ -61,9 +67,14 @@ class Action:
 
         content = pipeline.load_text_file(target)
         req.add_user_message(content)
-        resp = pipeline.execute_chat_completions(req.as_json())
 
-        # process result
+        start_sec = time.monotonic()
+        logger.info(f'start completions for "{str(target)}"...')
+        resp = pipeline.execute_chat_completions(req.as_json())
+        elapsed = time.monotonic() - start_sec;
+        logger.info(f'completions for "{str(target)}" done. Eelapsed: {elapsed} sec.')
+
+        # Process result
         extractor = Extractor()
         items = extractor.parse(resp)
         result = {
@@ -72,6 +83,7 @@ class Action:
             "response": extractor.get_contents(resp),
             "reasoning": extractor.get_reasoning_contents(resp),
             "succeeded": False,
+            "elapsed_time": elapsed,
         }
         if self.action == "edit":
             if len(items) == 1:
@@ -79,9 +91,9 @@ class Action:
                 result["succeeded"] = True
             else:
                 if len(items):
-                    print(f"multiple outputs for {target} are found, skip saving...")
+                    logger.error(f"multiple outputs for {target} are found, skip saving...")
                 else:
-                    print(f"outputs for {target} is not found, skip saving...")
+                    logger.error(f"outputs for {target} is not found, skip saving...")
                 pipeline.error_count += 1
             pipeline.add_result(result)
                 
