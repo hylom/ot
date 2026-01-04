@@ -1,5 +1,7 @@
 import http.server
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -59,7 +61,9 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 def start_server(host="", port=8080):
     server_address = (host, port)
     httpd = http.server.HTTPServer(server_address, HTTPRequestHandler)
+    logger.info(f"start HTTP server on {host}:{port}")
     httpd.serve_forever()
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     start_server()
