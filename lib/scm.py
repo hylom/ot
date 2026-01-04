@@ -96,7 +96,7 @@ class SourceCodeManager(Module):
             logger.info(create_and_switch_branch(config, branch_name))
 
         # check target files
-        for target in action.get_targets():
+        for target in action.get_targets_to_commit():
             if not is_file_managed(config, target):
                 raise ScmError(f"target file {target} is not tracked by git")
             if is_file_changed(config, target):
@@ -106,7 +106,7 @@ class SourceCodeManager(Module):
         """commit changes"""
         # add changed files
         changed = False
-        for target in action.get_targets():
+        for target in action.get_targets_to_commit():
             if is_file_changed(config, target):
                 add_file(config, target)
                 changed = True

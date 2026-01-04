@@ -33,10 +33,9 @@ def start():
     state.transition(State.States.STARTUP)
     
     args = parse_arg()
-    action = Action(tomllib.load(args.filename))
+    action = Action.create_action(tomllib.load(args.filename))
     args.filename.close()
 
-    #p = Pipeline.fromAction(action)
     p = Pipeline(config, state)
     p.add_action(action)
 
