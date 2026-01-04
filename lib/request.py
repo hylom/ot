@@ -22,13 +22,11 @@ def _post(endpoint, path, body):
     logger.debug(f"""result: {result_json}""")
     return result_json
 
-def chat_completions(req):
-    return _post("http://localhost:8080", "/v1/chat/completions", req)
+def chat_completions(req, config):
+    """request completions to OpenAI (compatible) API server"""
+    endpoint = get_endpoint(config)
+    return _post(endpoint, "/v1/chat/completions", req)
 
-## for test
-def _chat_completions(req):
-    p = Path(__file__)
-    fname = p.parent.parent / "tmp.json"
-    with fname.open("r", encoding="utf8") as fp:
-        rs = json.load(fp)
-    return rs
+def get_endpoint(config={}) -> str:
+    default_endpoint = "http://localhost:8080"
+    return config.get("provider", {}).get("endpoint", default_endpoint)

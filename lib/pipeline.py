@@ -49,5 +49,5 @@ class Pipeline:
             fp.write(content)
         
     def execute_chat_completions(self, request: str):
-        resp = chat_completions(request)
+        resp = chat_completions(request, self.config)
         return resp
