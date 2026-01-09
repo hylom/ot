@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 import argparse
+from datetime import datetime
 
 from .arg_parser import parse_arg
 from .config import Config
@@ -12,15 +13,22 @@ from .state import State
 from .pipeline import Pipeline
 from lib import pipeline
 from .action import Actions
+from .chat_request import ChatRequest
 
 class LogJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Path):
             return str(o)
+        if isinstance(o, ChatRequest):
+            return o.serialize()
         return super().default(o)
 
 def is_debug_enabled() -> bool:
     return any([(x == "--debug") for x in sys.argv[1:]])
+
+def get_json_log_pathname(prefix: str="ot-log") -> str:
+    dt = datetime.now()
+    return f"{prefix}-{dt.strftime("%Y%m%d-%H%M%S")}.json"
 
 def start():
     # check if debug option is given
@@ -55,5 +63,6 @@ def start():
     state.transition(State.States.AFTER_PROCESS, p)
 
     # save logs
-    with open("ot_log.json", "wt", encoding="utf8") as fp:
+    pathname = get_json_log_pathname()
+    with open(pathname, "wt", encoding="utf8") as fp:
         json.dump(p.results, fp, ensure_ascii=False, indent=2, cls=LogJSONEncoder)

@@ -13,7 +13,7 @@ class ChatRequest:
         self.messages.append(msg)
 
     def as_json(self):
-        return json.dumps({
-            "messages": self.messages,
-            })
-    
+        return json.dumps(self.serialize())
+
+    def serialize(self):
+        return { "messages": self.messages, }

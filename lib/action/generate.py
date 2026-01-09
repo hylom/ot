@@ -1,8 +1,8 @@
 """Implements `generate` action"""
 
 import time
-import logging
 from pathlib import Path
+import logging
 logger = logging.getLogger(__name__)
 
 from .action import Action, Actions, common_parameter
@@ -29,6 +29,14 @@ class GenerateAction(Action):
             req.add_user_message(content)
             count += 1
 
+        result: dict = {
+            "target": self.get_targets(),
+            "request": req,
+            "succeeded": False,
+        }
+        # add result before for request failure
+        pipeline.add_result(result)
+
         start_sec = time.monotonic()
         logger.info(f'start completions for {count} files...')
         resp = pipeline.execute_chat_completions(req.as_json())
@@ -38,20 +46,16 @@ class GenerateAction(Action):
         # Process result
         extractor = self.get_extractor(self.name)
         items = extractor.get_contents(resp)
-        result = {
-            "target": self.get_targets(),
-            "outputs": items,
-            "response": extractor.get_contents(resp),
-            "reasoning": extractor.get_reasoning_contents(resp),
-            "succeeded": False,
-            "elapsed_time": elapsed,
-        }
         index = 0
+        result["outputs"] = items
+        result["response"] = extractor.get_contents(resp)
+        result["reasoning"] = extractor.get_reasoning_contents(resp)
+        result["elapsed_time"] =  elapsed
+        result["succeeded"] = True
         for item in items:
             print(f"---- result #{index}: ----\n")
             print(item)
             index += 1
-        pipeline.add_result(result)
 
     def get_targets_to_commit(self) -> list[Path]:
         return []

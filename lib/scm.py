@@ -79,13 +79,19 @@ class SourceCodeManager(Module):
     
     def before_action(self, config, action):
         """check git repository status"""
+
+        # if no need to commit, skip repository checking
+        if len(action.get_targets_to_commit()) == 0:
+            logger.debug("no target to commit")
+            return
+        
         # check repository status
         rs = get_repo_status(config)
         logger.debug(rs)
 
         # check branch
         branch = get_current_branch_name(config)
-        logger.debug(branch)
+        logger.debug(f"target branch: {branch}")
         if branch == "master" or branch == "main":
             msg = f"Current branch is {branch}, and it is not recommend to execute {config.prog_name} in {branch} branch. Do you want to create a new branch?"
             if not confirm(msg):

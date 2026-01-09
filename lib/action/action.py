@@ -162,13 +162,23 @@ class Action:
             self.set_action(action)
     
     def set_action(self, action):
-        if "target" in action:
+        if "target" in action and action["target"] is not None:
             if isinstance(action["target"], list):
                 self.targets.extend(action["target"])
             else:
                 self.targets.append(action["target"])
-        if "prompt" in action:
-            self.prompts.append(action["prompt"])
+        if "prompt" in action and action["prompt"] is not None:
+            if isinstance(action["prompt"], list):
+                self.prompts.extend(action["prompt"])
+            else:
+                self.prompts.append(action["prompt"])
+        if "sys_prompt" in action and action["sys_prompt"] is not None:
+            if isinstance(action["sys_prompt"], list):
+                self.sys_prompts.extend(action["sys_prompt"])
+            else:
+                self.sys_prompts.append(action["sys_prompt"])
+        if "output" in action and action["output"] is not None:
+            self.output = action["output"]
 
     def get_targets(self) -> list[Path]:
         return TargetParser().parse(self.targets)

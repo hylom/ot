@@ -5,6 +5,9 @@ import json
 from .chat_request import ChatRequest
 from .request import chat_completions
 from .state import State
+from urllib.error import URLError
+import logging
+logger = logging.getLogger(__name__)
 
 class Pipeline:
     """A class holds operations and targets"""
@@ -34,7 +37,11 @@ class Pipeline:
     def start(self):
         for action in self.actions:
             self.state.transition(State.States.BEFORE_ACTION, action)
-            action.execute(self)
+            try:
+                action.execute(self)
+            except URLError as e:
+                logger.error(f"failed to connect to server: {e}")
+                continue
             self.state.transition(State.States.AFTER_ACTION, action)
 
     def load_text_file(self, filename: str) -> str:
