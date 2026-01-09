@@ -1,4 +1,4 @@
-"""Implements `inspect` action"""
+"""Implements `generate` action"""
 
 import time
 import logging
@@ -9,11 +9,11 @@ from .action import Action, Actions, common_parameter
 
 @common_parameter("prompt")
 @common_parameter("sys_prompt")
-@common_parameter("target")
-class InspectAction(Action):
-    """A class implements `inspect` action"""
-    name = "inspect"
-    description = "inspect targets"
+@common_parameter("output")
+class GenerateAction(Action):
+    """A class implements `generate` action"""
+    name = "generate"
+    description = "generate file(s)"
 
     def __init__(self, action=None):
         super().__init__(action)
@@ -39,7 +39,7 @@ class InspectAction(Action):
         extractor = self.get_extractor(self.name)
         items = extractor.get_contents(resp)
         result = {
-            "target": target,
+            "target": self.get_targets(),
             "outputs": items,
             "response": extractor.get_contents(resp),
             "reasoning": extractor.get_reasoning_contents(resp),
@@ -56,4 +56,4 @@ class InspectAction(Action):
     def get_targets_to_commit(self) -> list[Path]:
         return []
 
-Actions.add_action(InspectAction)
+Actions.add_action(GenerateAction)

@@ -4,11 +4,15 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-from .action import Action
+from .action import Action, Actions, common_parameter
 
+@common_parameter("prompt")
+@common_parameter("sys_prompt")
+@common_parameter("target")
 class EditAction(Action):
     """A class implements `edit` action"""
-    action_name = "edit"
+    name = "edit"
+    description = "edit target file"
 
     def __init__(self, action=None):
         super().__init__(action)
@@ -27,7 +31,7 @@ class EditAction(Action):
         logger.info(f'completions for "{str(target)}" done. Eelapsed: {elapsed} sec.')
 
         # Process result
-        extractor = self.get_extractor(self.action)
+        extractor = self.get_extractor(self.name)
         items = extractor.parse(resp)
         result = {
             "target": target,
@@ -53,4 +57,4 @@ class EditAction(Action):
         for target in self.get_targets():
             self.execute_per_target(target, pipeline)
 
-Action.add_action(EditAction)
+Actions.add_action(EditAction)

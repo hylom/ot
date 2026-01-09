@@ -75,7 +75,7 @@ class SourceCodeManager(Module):
 
     def generate_commit_message(self, action):
         msg = " ".join(action.prompts)
-        return f"O't-mated {action.action}: {msg}"
+        return f"O't-mated {action.name}: {msg}"
     
     def before_action(self, config, action):
         """check git repository status"""

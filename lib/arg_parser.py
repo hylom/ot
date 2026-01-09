@@ -1,13 +1,16 @@
 import argparse
 
-def pre_parse_arg():
-    p = argparse.ArgumentParser()
-    p.add_argument("--debug", action="store_true")
-    r =p.parse_known_args()
-    return r[0]
+parser = argparse.ArgumentParser()
+parser.add_argument("--debug", help="enable debug output",
+                    action="store_true")
+subparsers = parser.add_subparsers(dest="command", required=True,
+                                   title="subcommands",
+                                   help="actions to run")
 
 def parse_arg():
-    p = argparse.ArgumentParser()
-    p.add_argument("filename", type=argparse.FileType("rb"))
-    p.add_argument("--debug", action="store_true")
-    return p.parse_args()
+    return parser.parse_args()
+
+def add_subcommand(command: str, help:str|None=None) -> argparse.ArgumentParser:
+    p = subparsers.add_parser(command, help=help)
+    return p
+    
