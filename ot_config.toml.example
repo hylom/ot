@@ -1,0 +1,11 @@
+# configurations for O't-mate
+
+[output]
+encoding = "utf8"
+newline = "\n"
+
+[input]
+encoding = "utf8"
+
+[provider]
+endpoint = "http://localhost:8080"
